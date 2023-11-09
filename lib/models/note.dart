@@ -7,6 +7,7 @@ class Note {
   var style;
   var image;
   var record;
+  var color;
   DateTime modifiedTime;
 
   Note({
@@ -17,7 +18,7 @@ class Note {
     this.style,
     this.image = "",
     this.record = "",
-
+    this.color = "",
   });
 }
 List<Note> sampleNotes =[];

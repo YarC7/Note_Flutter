@@ -28,6 +28,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isDarkMode = true;
 
 
+  bool isGridView = false;
+
+
 
   @override
   void initState() {
@@ -79,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
+
   // void deleteNote(int index) async {
   //   String noteId = sampleNotes[index].id.toString().trim();
   //   FirebaseFirestore.instance.collection("notes").doc(noteId).delete();
@@ -89,6 +93,12 @@ class _HomeScreenState extends State<HomeScreen> {
   //     filteredNotes.removeAt(index);
   //   });
   // }
+
+  String colorHex(int index){
+    String hexColor = filteredNotes[index].color;
+
+    return hexColor;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,39 +207,226 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: isDarkMode ? Colors.white : Colors.black,
                         ),
                       )),
-                  IconButton(
-                      alignment: Alignment.topLeft,
-                      onPressed: () {
-                        setState(() {
-                          filteredNotes = sortNotesByModifiedTime(filteredNotes);
-                        });
-                      },
-                      padding: const EdgeInsets.all(0),
-                      icon: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                            border: Border.all(
-                                color: isDarkMode ? Colors.grey.shade800 : Colors.black,
-                                width: 3
+                  Row(
+                    children: [
+                      IconButton(
+                          alignment: Alignment.topLeft,
+                          onPressed: () {
+                            setState(() {
+                              filteredNotes = sortNotesByModifiedTime(filteredNotes);
+                            });
+                          },
+                          padding: const EdgeInsets.all(0),
+                          icon: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: isDarkMode ? Colors.grey.shade800 : Colors.black,
+                                    width: 3
+                                ),
+                                color: isDarkMode ? Colors.grey.shade800.withOpacity(.8) : Colors.white,
+                                borderRadius: BorderRadius.circular(10)),
+                            child: Icon(
+                              isDarkMode ? Icons.sort : Icons.sort,
+                              color: isDarkMode ? Colors.white : Colors.black,
                             ),
-                            color: isDarkMode ? Colors.grey.shade800.withOpacity(.8) : Colors.white,
-                            borderRadius: BorderRadius.circular(10)),
-                        child: Icon(
-                          isDarkMode ? Icons.sort : Icons.sort,
-                          color: isDarkMode ? Colors.white : Colors.black,
-                        ),
-                      )),
+                          )),
+                      IconButton(
+                          alignment: Alignment.topLeft,
+                          onPressed: () {
+                            setState(() {
+                              isGridView = !isGridView;
+                            });
+                          },
+                          padding: const EdgeInsets.all(0),
+                          icon: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: isDarkMode ? Colors.grey.shade800 : Colors.black,
+                                    width: 3
+                                ),
+                                color: isDarkMode ? Colors.grey.shade800.withOpacity(.8) : Colors.white,
+                                borderRadius: BorderRadius.circular(10)),
+                            child: Icon(
+                              isDarkMode ? Icons.grid_view : Icons.grid_view,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          )),
+                    ],
+                  )
+
                 ],
               ),
               Expanded(
-                  child: ListView.builder(
+                  child: isGridView == true ?
+
+                  GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,// You can adjust the number of columns
+                    ),
+
+
+                    itemCount: filteredNotes.length,
+                    itemBuilder: (context, index) {
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        color: Color(int.parse(colorHex(index))),
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(5),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              ListTile(
+                                onTap: () async {
+                                  getNotesFromFirestoreCollection();
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (BuildContext context) =>
+                                          EditScreen(note: filteredNotes[index]),
+                                    ),
+                                  );
+                                  if (result != null) {
+                                    {
+                                      String id = sampleNotes[index].id;
+                                      QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('notes').get();
+                                      for (QueryDocumentSnapshot document in querySnapshot.docs) {
+                                        Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+                                        if (data["id"] == id){
+                                          String firestoreDocumentId = document.id;
+                                          final docNote = FirebaseFirestore.instance.collection('notes').doc(firestoreDocumentId);
+                                          docNote.update({
+                                            "title": result[0],
+                                            "content": result[1],
+                                            "style" : result[2],
+                                            "image" : result[3],
+                                            "record" : result[4],
+                                            "color" : result[5],
+                                            "modifiedTime": DateTime.now()
+                                          });
+                                        }
+                                      }
+                                      filteredNotes.removeAt(index);
+                                      getNotesFromFirestoreCollection();
+
+
+                                    };
+                                  }
+                                },
+                                title: RichText(
+                                  maxLines: 2,
+                                  overflow: TextOverflow.fade,
+                                  text: TextSpan(
+                                      text: '${filteredNotes[index].title} \n',
+                                      style: const TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 22,
+                                          height: 1.5),
+                                      children: [
+                                        TextSpan(
+                                          text: filteredNotes[index].content,
+                                          style: const TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: 18,
+                                              height: 1.5),
+                                        )
+                                      ]),
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 10.0),
+                                  child: Text(
+                                    'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(filteredNotes[index].modifiedTime)}',
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
+                                        color: Colors.grey.shade800),
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  IconButton(
+                                    onPressed: () async {
+                                      // final result = await confirmDialog(context);
+                                      // if (result!=null && result){
+                                      //
+                                      // }
+                                      getNotesFromFirestoreCollection();
+
+                                      if (index >= 0 && index < sampleNotes.length) {
+                                        // The index is valid, so you can safely access the element
+                                        String id = sampleNotes[index].id;
+
+
+                                        QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('notes').get();
+
+                                        for (QueryDocumentSnapshot document in querySnapshot.docs) {
+                                          Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+                                          if (data["id"] == id){
+                                            String firestoreDocumentId = document.id;
+                                            final docNote = FirebaseFirestore.instance.collection('notes').doc(firestoreDocumentId);
+                                            docNote.delete().then((_) {
+                                              setState(() {
+                                                // Remove the deleted note from the filteredNotes list
+                                                filteredNotes.removeAt(index);
+                                                getNotesFromFirestoreCollection();
+
+                                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                                  content: Text('You have successfully deleted a note'),
+                                                ));
+                                              });
+                                            }).catchError((error) {
+                                              print('Error deleting note: $error');
+                                            });
+
+                                            // Now, firestoreDocumentId contains the Firestore document ID for the note with the provided note ID
+                                            break;
+                                          }
+                                          // Optionally, you can break the loop if you've found the matching document
+                                        }
+                                      } else {
+                                        print('Invalid index: $index');
+                                      }
+
+
+
+
+                                      // final docNote = FirebaseFirestore.instance.collection('notes').doc("064XW7x8LeNpECLDLysi");
+                                      // docNote.delete();
+                                    },
+                                    icon: const Icon(
+                                      Icons.delete,
+                                    ),
+                                  )
+                                ],
+                              )
+                              ,
+                            ],
+                          )
+
+
+                        ),
+                      );
+                    },
+                  ) :
+                  ListView.builder(
                     padding: const EdgeInsets.only(top: 10),
                     itemCount: filteredNotes.length,
                     itemBuilder: (context, index) {
                       return Card(
                         margin: const EdgeInsets.only(bottom: 20),
-                        color: getRandomColor(),
+                        color: Color(int.parse(colorHex(index))),
                         elevation: 3,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
@@ -260,6 +457,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         "style" : result[2],
                                         "image" : result[3],
                                         "record" : result[4],
+                                        "color" : result[5],
                                         "modifiedTime": DateTime.now()
                                       });
                                     }
@@ -384,6 +582,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   "style" : result[2],
                   "image" : result[3],
                   "record" : result[4],
+                  "color" : result[5],
                   "modifiedTime": DateTime.now(),
                 });
                 indexxxx = indexxxx +1;
@@ -437,6 +636,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style : data['style'],
           image: data["image"],
           record: data["record"],
+          color: data["color"],
           modifiedTime: (data['modifiedTime'] as Timestamp).toDate(),
         );
       }).toList();

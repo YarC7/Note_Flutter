@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:image/image.dart'as Img;
 import 'package:image_editor_plus/image_editor_plus.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:note_app/constants/colors.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:social_media_recorder/audio_encoder_type.dart';
 import 'package:social_media_recorder/screen/social_media_recorder.dart';
 import '../constants/common.dart';
@@ -19,6 +21,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:share_plus/share_plus.dart';
+
 
 class EditScreen extends StatefulWidget {
   final Note? note;
@@ -82,7 +86,11 @@ class _EditScreenState extends State<EditScreen> {
   // final soundDestination = 'sound/';
 
   FirebaseStorage storage = FirebaseStorage.instance;
-
+  ScreenshotController screenshotController = ScreenshotController();
+  String _color ="";
+  Uint8List? _screenshot;
+  bool isDarkMode = true;
+  FocusNode _editorFocusNode = FocusNode();
 
 
   @override
@@ -111,13 +119,18 @@ class _EditScreenState extends State<EditScreen> {
         });
       }
 
-      if (widget.note!.record != ""){
+      if (widget.note!.record != null && widget.note!.record != ""){
         setState(() {
           fileName = widget.note!.record;
           recordingPlayer = true;
         });
         downloadFile();
         _init();
+      }
+      if (widget.note!.color != ""){
+        setState(() {
+          _color = widget.note!.color;
+        });
       }
       // if (widget.note!.sound != ""){
       //   setState(() {
@@ -188,9 +201,9 @@ class _EditScreenState extends State<EditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade900,
+      backgroundColor: isDarkMode ? Colors.grey.shade900 : Colors.white,
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 50, 16, 10),
+        padding: const EdgeInsets.fromLTRB(16, 60, 16, 10),
         child:
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +211,6 @@ class _EditScreenState extends State<EditScreen> {
                   [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                       children: [
                         IconButton(
                             onPressed: () {
@@ -209,136 +221,293 @@ class _EditScreenState extends State<EditScreen> {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                  color: Colors.grey.shade800.withOpacity(.8),
+                                  border: Border.all(
+                                      color: isDarkMode ? Colors.grey.shade800 : Colors.black,
+                                      width: 3
+                                  ),
+                                  color: isDarkMode ? Colors.grey.shade800.withOpacity(.8) : Colors.white,
                                   borderRadius: BorderRadius.circular(10)),
-                              child: const Icon(
+                              child:  Icon(
                                 Icons.arrow_back_ios_new,
-                                color: Colors.white,
+                                color: isDarkMode ? Colors.white : Colors.black,
                               ),
                             )
                         ),
-                      ],
-                    ),
-                    Expanded(
-                        child: ListView(
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+
                           children: [
-                              TextField(
-                                controller: _titleController,
-                                style: const TextStyle(color: Colors.white, fontSize: 30),
-                                decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    hintText: 'Title',
-                                    hintStyle: TextStyle(color: Colors.grey, fontSize: 30)),
-                              ),
-                              TextField(
-                                onTap: (){
-                                  textEditDialog(context);
+                            IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    isDarkMode = !isDarkMode;
+                                  });
                                 },
-                                controller: _contentController,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                padding: const EdgeInsets.all(0),
+                                icon: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: isDarkMode ? Colors.grey.shade800 : Colors.black,
+                                          width: 3
+                                      ),
+                                      color: isDarkMode ? Colors.grey.shade800.withOpacity(.8) : Colors.white,
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child: Icon(
+                                    isDarkMode ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                                    color: isDarkMode ? Colors.white : Colors.black,
+                                  ),
+                                )
+                            ),
+                            IconButton(
+                                onPressed: () {
+                                  shareDialog(context);
+                                },
+                                padding: const EdgeInsets.all(0),
+                                icon: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: isDarkMode ? Colors.grey.shade800 : Colors.black,
+                                          width: 3
+                                      ),
+                                      color: isDarkMode ? Colors.grey.shade800.withOpacity(.8) : Colors.white,
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child:  Icon(
+                                    Icons.share,
+                                    color:isDarkMode ? Colors.white : Colors.black,
+                                  ),
+                                )
+                            ),
+
+                            IconButton(
+                                onPressed: () {
+                                  colorDiaglog(context);
+                                },
+                                padding: const EdgeInsets.all(0),
+                                icon: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: isDarkMode ? Colors.grey.shade800 : Colors.black,
+                                          width: 3
+                                      ),
+                                      color: isDarkMode ? Colors.grey.shade800.withOpacity(.8) : Colors.white,
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child:  Icon(
+                                    Icons.circle,
+                                    color: _color != "" ? Color(int.parse(_color)):Colors.white,
+                                  ),
+                                )
+                            )
+                      ],
+                    ),],
+                    ),
+
+
+                    Expanded(
+                        child: Screenshot(
+                          controller: screenshotController,
+                          child: ListView(
+                              children: [
+                                TextField(
+                                  controller: _titleController,
+                                  style:  TextStyle(color: isDarkMode ? Colors.white : Colors.black, fontSize: 30),
+                                  decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      hintText: 'Title',
+                                      hintStyle: TextStyle(color: Colors.grey, fontSize: 30)),
                                 ),
-                                maxLines: null,
-                                decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    hintText: 'Type something here',
-                                    hintStyle: TextStyle(
-                                      color: Colors.grey,
-                                    )),
-                              ),
-                              if (bytesImage != null && viewImage == true)
-                                Container(
-                                  child: Column(
-                                    children : [
-                                      InkWell(
-                                        onTap: () {
-                                          confirmDialog(context);
-                                        },
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(20),
-                                          child:
-                                          Image.memory(bytesImage!,width: 300, height: 300),
-                                        ),
-                                      ),],
+                                TextField(
+                                  focusNode: _editorFocusNode,
+                                  onTap: (){
+                                    textEditDialog(context);
+                                  },
+                                  maxLines: null,
+                                  controller: _contentController,
+                                  style:  TextStyle(
+                                    color: isDarkMode ? Colors.white : Colors.black,
+                                  ),
+                                  decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      hintText: 'Type something here',
+                                      hintStyle: TextStyle(
+                                        color: Colors.grey,
+                                      )
                                   ),
                                 ),
-                            if (recordingPlayer == true && audioFileUrl !=null)
-                              Container(
-                                decoration:
-                                BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(25)),
-                                child:
-                                Column(
-                                    children : [
-                                      ControlButtons(_player),
-                                      StreamBuilder<PositionData>(
-                                        stream: _positionDataStream,
-                                        builder: (context, snapshot) {
-                                          final positionData = snapshot.data;
-                                          return SeekBar(
-                                            duration: positionData?.duration ?? Duration.zero,
-                                            position: positionData?.position ?? Duration.zero,
-                                            bufferedPosition:
-                                            positionData?.bufferedPosition ?? Duration.zero,
-                                            onChangeEnd: _player.seek,
-                                          );
-                                        },
-                                      ),
-                                      IconButton(
-                                        onPressed: () async {
+                                // QuillProvider(
+                                //     configurations: QuillConfigurations(
+                                //       controller: _controller,
+                                //       sharedConfigurations: const QuillSharedConfigurations(
+                                //         locale: Locale('de'),
+                                //       ),
+                                //     ),
+                                //     child:
+                                //         Column(
+                                //           children: [
+                                //
+                                //             Container(
+                                //               height: 300,
+                                //               decoration: BoxDecoration(
+                                //                   border: Border.all(
+                                //                       color: isDarkMode ? Colors.grey.shade800 : Colors.black,
+                                //                       width: 3
+                                //                   ),
+                                //                   color: Colors.white,
+                                //                   borderRadius: BorderRadius.circular(10)),
+                                //               child: QuillEditor.basic(
+                                //                 configurations: const QuillEditorConfigurations(
+                                //                   readOnly: false,
+                                //                 ),
+                                //               ),
+                                //             ),
+                                //             Container(
+                                //               decoration: BoxDecoration(
+                                //                   border: Border.all(
+                                //                       color: isDarkMode ? Colors.grey.shade800 : Colors.black,
+                                //                       width: 3
+                                //                   ),
+                                //                   color: Colors.white,
+                                //                   borderRadius: BorderRadius.circular(10)),
+                                //               child: QuillToolbar(
+                                //                 configurations:  QuillToolbarConfigurations(
+                                //
+                                //                     toolbarSize: 25,
+                                //                     multiRowsDisplay: false
+                                //                 ),
+                                //               ),
+                                //             ),
+                                //           ],
+                                //         )
+                                //
+                                //
+                                // ),
 
-                                          try {
-                                            Reference storageReference = FirebaseStorage.instance.ref(destination).child('$fileName');
-                                            storageReference.delete();
-                                            setState(() {
-                                              recordingPlayer = false;
-                                              audioFileUrl = null;
-                                              fileName = "";
-                                            });
-                                          } catch (e) {
-                                            print('error occured');
-                                          }
-                                        },
-                                        icon: Container(
-                                          width: 300,
-                                          height: 300,
-                                          decoration: BoxDecoration(
-                                              color: Colors.black,
-                                              borderRadius: BorderRadius.circular(25)),
-                                          child: const Icon(
-                                            Icons.delete_outlined,
-                                            color: Colors.white,
-                                            textDirection: TextDirection.ltr,
-                                            size: 30,
+                                // RichText(
+                                //   text: TextSpan(
+                                //     children: json!.map((item) {
+                                //       final text = item['insert'].toString();
+                                //       final attributes = item['attributes'] as Map<String, dynamic>;
+                                //
+                                //       if (attributes != null && attributes['list'] == 'unchecked') {
+                                //         return TextSpan(
+                                //           text: text,
+                                //           style: TextStyle(
+                                //             fontSize: 16.0, // Adjust the font size as needed
+                                //             color: Colors.black, // Adjust the text color as needed
+                                //             fontWeight: FontWeight.normal, // Adjust the font weight as needed
+                                //           ),
+                                //         );
+                                //       } else {
+                                //         // Handle other styling (e.g., checked list items) here if needed
+                                //         return TextSpan(
+                                //           text: text,
+                                //           style: TextStyle(), // Apply default style here
+                                //         );
+                                //       }
+                                //     }).toList(),
+                                //   ),
+                                // ),
+
+                                if (bytesImage != null && viewImage == true)
+                                  Container(
+                                    child: Column(
+                                      children : [
+                                        InkWell(
+                                          onTap: () {
+                                            confirmDialog(context);
+                                          },
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(20),
+                                            child:
+                                            Image.memory(bytesImage!,width: 300, height: 300),
                                           ),
-                                        ),
-                                      )
-                                    ]
-                                ),
-                              )
+                                        ),],
+                                    ),
+                                  ),
+                                if (recordingPlayer == true && audioFileUrl !=null)
+                                  Container(
+                                    decoration:
+                                    BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(25)),
+                                    child:
+                                    Column(
+                                        children : [
+                                          ControlButtons(_player),
+                                          StreamBuilder<PositionData>(
+                                            stream: _positionDataStream,
+                                            builder: (context, snapshot) {
+                                              final positionData = snapshot.data;
+                                              return SeekBar(
+                                                duration: positionData?.duration ?? Duration.zero,
+                                                position: positionData?.position ?? Duration.zero,
+                                                bufferedPosition:
+                                                positionData?.bufferedPosition ?? Duration.zero,
+                                                onChangeEnd: _player.seek,
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            onPressed: () async {
 
-                            // if (soundPlayer == true && soundFilePath !=null)
-                            //   Column(
-                            //       children : [
-                            //         ControlButtons(_player),
-                            //         StreamBuilder<PositionData>(
-                            //           stream: _positionDataStream,
-                            //           builder: (context, snapshot) {
-                            //             final positionData = snapshot.data;
-                            //             return SeekBar(
-                            //               duration: positionData?.duration ?? Duration.zero,
-                            //               position: positionData?.position ?? Duration.zero,
-                            //               bufferedPosition:
-                            //               positionData?.bufferedPosition ?? Duration.zero,
-                            //               onChangeEnd: _player.seek,
-                            //             );
-                            //           },
-                            //         ),
-                            //       ]
-                            //   )
-                            ]
+                                              try {
+                                                Reference storageReference = FirebaseStorage.instance.ref(destination).child('$fileName');
+                                                storageReference.delete();
+                                                setState(() {
+                                                  recordingPlayer = false;
+                                                  audioFileUrl = "";
+                                                  fileName = "";
+                                                });
+                                              } catch (e) {
+                                                print('error occured');
+                                              }
+                                            },
+                                            icon: Container(
+                                              width: 300,
+                                              height: 300,
+                                              decoration: BoxDecoration(
+                                                  color: Colors.black,
+                                                  borderRadius: BorderRadius.circular(25)),
+                                              child: const Icon(
+                                                Icons.delete_outlined,
+                                                color: Colors.white,
+                                                textDirection: TextDirection.ltr,
+                                                size: 30,
+                                              ),
+                                            ),
+                                          )
+                                        ]
+                                    ),
+                                  )
+
+                                // if (soundPlayer == true && soundFilePath !=null)
+                                //   Column(
+                                //       children : [
+                                //         ControlButtons(_player),
+                                //         StreamBuilder<PositionData>(
+                                //           stream: _positionDataStream,
+                                //           builder: (context, snapshot) {
+                                //             final positionData = snapshot.data;
+                                //             return SeekBar(
+                                //               duration: positionData?.duration ?? Duration.zero,
+                                //               position: positionData?.position ?? Duration.zero,
+                                //               bufferedPosition:
+                                //               positionData?.bufferedPosition ?? Duration.zero,
+                                //               onChangeEnd: _player.seek,
+                                //             );
+                                //           },
+                                //         ),
+                                //       ]
+                                //   )
+                              ]
+                          ),
                         )
+
                     ),
                     IconButton(
                       onPressed: () async {
@@ -351,11 +520,15 @@ class _EditScreenState extends State<EditScreen> {
                         width: 300,
                         height: 300,
                         decoration: BoxDecoration(
-                            color: Colors.grey.shade800.withOpacity(.8),
+                            border: Border.all(
+                                color: isDarkMode ? Colors.grey.shade800 : Colors.black,
+                                width: 3
+                            ),
+                            color: isDarkMode ? Colors.grey.shade800.withOpacity(.8) : Colors.white,
                             borderRadius: BorderRadius.circular(25)),
-                        child: const Icon(
+                        child: Icon(
                           Icons.add_box_outlined,
-                          color: Colors.white,
+                          color: isDarkMode ? Colors.white : Colors.black,
                           textDirection: TextDirection.ltr,
                           size: 30,
                         ),
@@ -367,13 +540,108 @@ class _EditScreenState extends State<EditScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.pop(
-              context, [_titleController.text, _contentController.text,json,_base64,fileName]);
+              context, [_titleController.text, _contentController.text,json,_base64,fileName,_color]);
         },
         elevation: 10,
-        backgroundColor: Colors.grey.shade800,
-        child: const Icon(Icons.save),
+        backgroundColor: isDarkMode ? Colors.grey.shade800.withOpacity(.8) : Colors.white,
+        child: Icon(
+          Icons.save,
+          color: isDarkMode ? Colors.white : Colors.black,
+        ),
       )
           );
+  }
+
+  Future<void> textEditDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(40),
+                side: BorderSide(
+                  color: Colors.black,
+                )),
+            surfaceTintColor: Colors.black,
+            elevation: 2,
+            child:
+            Padding(
+              padding: const EdgeInsets.fromLTRB(5, 30, 5, 10),
+              child: QuillProvider(
+                configurations: QuillConfigurations(
+                  controller: _controller,
+                  sharedConfigurations: const QuillSharedConfigurations(
+                    locale: Locale('de'),
+                  ),
+                ),
+                child: Column(
+                    children:[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              padding: const EdgeInsets.all(0),
+                              icon: Container(
+                                width: 25,
+                                height: 25,
+                                decoration: BoxDecoration(
+                                    color: Colors.grey.shade800.withOpacity(.8),
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: const Icon(
+                                  Icons.close_outlined,
+                                  color: Colors.white,
+                                ),
+                              )
+                          ),IconButton(
+                              onPressed: () async{
+                                setState(() {
+                                  _contentController.text = _controller.document.toPlainText();
+                                  json = serializeQuillDocumentToJson();
+                                });
+                                Navigator.pop(context);
+                              },
+                              padding: const EdgeInsets.all(0),
+                              icon: Container(
+                                width: 25,
+                                height: 25,
+                                decoration: BoxDecoration(
+                                    color: Colors.grey.shade800.withOpacity(.8),
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                ),
+                              )
+                          ),
+                        ],
+                      ),
+
+                      QuillToolbar(
+                        configurations:  QuillToolbarConfigurations(
+                            toolbarSize: 25,
+                            // multiRowsDisplay: false
+                        ),
+                      ),
+                      Expanded(
+                          child:
+                          Container(
+                            child: QuillEditor.basic(
+                              configurations: const QuillEditorConfigurations(
+                                readOnly: false,
+                              ),
+                            ),
+                          )
+                      )
+                    ]
+                ),
+              ),
+            )
+        );
+      },
+    );
   }
 
   Future<Uint8List> m4aFileToUint8List(String filePath) async {
@@ -386,6 +654,152 @@ class _EditScreenState extends State<EditScreen> {
       return Uint8List(0); // Return an empty Uint8List or handle the error accordingly
     }
   }
+
+  String getHexCode(String input){
+    RegExp pattern = RegExp(r"0x([0-9a-fA-F]+)");
+
+    // Use firstMatch to find the pattern in the input string
+    Match? match = pattern.firstMatch(input);
+    if (match != null) {
+      // Extract the hexadecimal value
+      String hexValue = match.group(1)!;
+
+      // Add a '#' symbol if needed
+      if (hexValue.length % 2 == 1) {
+        hexValue = '0' + hexValue;
+      }
+
+      String hexCode = '0x' + hexValue;
+
+
+
+      return hexCode; // This will print '#9c27b0'
+    } else {
+      return "0";
+    }
+  }
+
+  Future<dynamic> shareWithText() async{
+    String title = _titleController.text;
+    String content = _contentController.text;
+    await Share.share("$title \n $content");
+
+  }
+
+
+
+  Future<dynamic> shareDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(40)),
+              content: Container(
+                height: 150,
+                width: 150,
+
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Expanded(
+                            child:
+                              ListTile(
+                                onTap: () async {
+                                  await shareWithText();
+                                } ,
+                                title: new Center(child: new Text("Share with text",
+                                  style: new TextStyle(
+                                      fontWeight: FontWeight.w500, fontSize: 25.0),)),
+                            )),
+                        Expanded(
+                            child:
+                            ListTile(
+                              onTap: ()  {
+                                takeScreenShot();
+                              },
+                              title: new Center(child: new Text("Share with image",
+                                style: new TextStyle(
+                                    fontWeight: FontWeight.w500, fontSize: 25.0),)),
+                            )),
+                        ElevatedButton(
+                          child: const Text('Cancle'),
+                          onPressed: () {
+                            Navigator.of(context).pop(); //dismiss the color picker
+                          },
+                        )
+
+                      ]
+                  ),
+              )
+
+          );
+        }
+    );
+  }
+
+
+
+  void takeScreenShot()  {
+    screenshotController
+        .capture(delay: Duration(milliseconds: 10))
+        .then((_screenshot) async {
+      _saved(_screenshot);
+      final buffer = _screenshot!.buffer;
+      Share.shareXFiles(
+        [
+          XFile.fromData(
+            buffer.asUint8List(_screenshot.offsetInBytes,_screenshot.lengthInBytes),
+            name: "Share Image",
+            mimeType: "image/png",
+            ),
+        ],
+        subject: "Share Image"
+      );
+    }).catchError((onError) {
+      print(onError);
+    });
+
+  }
+  _saved(image) async {
+    final result = await ImageGallerySaver.saveImage(image);
+    print("File Saved to Gallery");
+  }
+
+  Future<dynamic> colorDiaglog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(40)),
+            title: Text('Pick a color!'),
+            content: SingleChildScrollView(
+              child: BlockPicker(
+                pickerColor: Colors.grey.shade800, //default color
+                onColorChanged: (Color color){ //on color picked
+                  setState(() {
+
+                    _color = getHexCode((color.toString()));
+                  });
+
+                },
+              ),
+            ),
+            actions: <Widget>[
+              ElevatedButton(
+                child: const Text('DONE'),
+                onPressed: () {
+                  Navigator.of(context).pop(); //dismiss the color picker
+                },
+              ),
+            ],
+          );
+        }
+    );
+  }
+
 
   Future<dynamic> widgetDialog(BuildContext context) {
     return showDialog(
@@ -617,103 +1031,7 @@ class _EditScreenState extends State<EditScreen> {
     }
   }
 
-  Future<void> textEditDialog(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(40),
-              side: BorderSide(
-                color: Colors.black,
-              )),
-          surfaceTintColor: Colors.black,
-          elevation: 2,
-          child:
-              Padding(
-                padding: const EdgeInsets.fromLTRB(5, 30, 5, 10),
-                child: QuillProvider(
-                  configurations: QuillConfigurations(
-                    controller: _controller,
-                    sharedConfigurations: const QuillSharedConfigurations(
-                      locale: Locale('de'),
-                    ),
-                  ),
-                  child: Column(
-                      children:[
-                        // QuillToolbar(
-                        //   controller: _controller,
-                        //   toolbarIconSize: 25,
-                        //   iconTheme: QuillIconTheme(
-                        //     borderRadius: 14,
-                        //     iconSelectedFillColor: Colors.orange,
-                        //   ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                padding: const EdgeInsets.all(0),
-                                icon: Container(
-                                  width: 25,
-                                  height: 25,
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade800.withOpacity(.8),
-                                      borderRadius: BorderRadius.circular(10)),
-                                  child: const Icon(
-                                    Icons.close_outlined,
-                                    color: Colors.white,
-                                  ),
-                                )
-                            ),IconButton(
-                                onPressed: () async{
-                                    setState(() {
-                                      _contentController.text = _controller.document.toPlainText();
-                                      json = serializeQuillDocumentToJson();
-                                    });
-                                    Navigator.pop(context);
-                                },
-                                padding: const EdgeInsets.all(0),
-                                icon: Container(
-                                  width: 25,
-                                  height: 25,
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade800.withOpacity(.8),
-                                      borderRadius: BorderRadius.circular(10)),
-                                  child: const Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                  ),
-                                )
-                            ),
-                          ],
-                        ),
 
-                        QuillToolbar(
-                          configurations:  QuillToolbarConfigurations(
-                            toolbarSize: 25,
-                          ),
-                        ),
-                        Expanded(
-                            child:
-                            Container(
-                              child: QuillEditor.basic(
-                                configurations: const QuillEditorConfigurations(
-                                  readOnly: false,
-                                ),
-                              ),
-                            )
-                        )
-                      ]
-                  ),
-                ),
-              )
-        );
-      },
-    );
-  }
 
   Future selectfile() async{
     FilePickerResult? result = await FilePicker.platform.pickFiles();
