@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:note_app/models/note.dart';
 import 'package:note_app/screens/welcome_screen.dart';
-
+import 'package:note_app/services/notificate.dart';
+import 'package:timezone/data/latest.dart' as tz;
 // void main() {
 //   runApp(const MainApp());
 // }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  NotificationService().initNotification();
+  tz.initializeTimeZones();
   await Firebase.initializeApp().whenComplete(() {
       print("completed");
     });;

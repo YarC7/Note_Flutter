@@ -15,14 +15,16 @@ import 'package:screenshot/screenshot.dart';
 import 'package:social_media_recorder/audio_encoder_type.dart';
 import 'package:social_media_recorder/screen/social_media_recorder.dart';
 import '../constants/common.dart';
+import '../models/dateTimePicker.dart';
 import '../models/note.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:path_provider/path_provider.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:share_plus/share_plus.dart';
-
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
+import 'package:timezone/timezone.dart' as tz;
+import '../services/notificate.dart';
 
 class EditScreen extends StatefulWidget {
   final Note? note;
@@ -74,7 +76,6 @@ class _EditScreenState extends State<EditScreen> {
   final _player = AudioPlayer();
 
 
-
   //musicfile
 
   // bool soundPlayer = false;
@@ -91,6 +92,8 @@ class _EditScreenState extends State<EditScreen> {
   Uint8List? _screenshot;
   bool isDarkMode = true;
   FocusNode _editorFocusNode = FocusNode();
+  DateTime scheduleTime = DateTime.now();
+  MyStream myStream = new MyStream();
 
 
   @override
@@ -177,6 +180,7 @@ class _EditScreenState extends State<EditScreen> {
   @override
   void dispose() {
     _player.dispose();
+    myStream.dispose();
     super.dispose();
   }
 
@@ -281,7 +285,6 @@ class _EditScreenState extends State<EditScreen> {
                                   ),
                                 )
                             ),
-
                             IconButton(
                                 onPressed: () {
                                   colorDiaglog(context);
@@ -302,12 +305,33 @@ class _EditScreenState extends State<EditScreen> {
                                     color: _color != "" ? Color(int.parse(_color)):Colors.white,
                                   ),
                                 )
+                            ),
+                            IconButton(
+                                onPressed: () {
+                                  alarmDialog(context);
+
+
+                                },
+                                padding: const EdgeInsets.all(0),
+                                icon: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: isDarkMode ? Colors.grey.shade800 : Colors.black,
+                                          width: 3
+                                      ),
+                                      color: isDarkMode ? Colors.grey.shade800.withOpacity(.8) : Colors.white,
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child:  Icon(
+                                    Icons.snapchat_outlined,
+                                    color: Colors.white,
+                                  ),
+                                )
                             )
                       ],
-                    ),],
+                      ),],
                     ),
-
-
                     Expanded(
                         child: Screenshot(
                           controller: screenshotController,
@@ -551,6 +575,101 @@ class _EditScreenState extends State<EditScreen> {
       )
           );
   }
+
+
+
+  Future<void> alarmDialog(BuildContext context) async {
+    await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(40)),
+              content: Container(
+                height: 150,
+                width: 350,
+
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children : [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+
+                            ElevatedButton(
+                              child: const Text('Set Date Time'),
+                              onPressed: () {
+                                myStream.setNewData(context);
+
+                                myStream.dateStream.listen((event) {
+                                  setState(() {
+                                    scheduleTime = event;
+                                  });
+                                });
+
+
+
+
+
+
+
+                              },
+                            ),
+                          Container(
+                            alignment: Alignment.center,
+                            height: 50,
+                            margin: EdgeInsets.all(10),
+                            padding: EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: isDarkMode ? Colors.black : Colors.white,
+                                    width: 3
+                                ),
+                                color: isDarkMode ? Colors.white : Colors.white,
+                                borderRadius: BorderRadius.circular(10)),
+                            child:
+                            StreamBuilder(
+                              stream: myStream.dateStream,
+                              builder: (context, snapshot) => Text(
+
+                                snapshot.hasData
+                                    ? "${snapshot.data.year.toString()}-${snapshot.data.month.toString().padLeft(2,'0')}-${snapshot.data.day.toString().padLeft(2,'0')}:${snapshot.data.hour.toString().padLeft(2,'0')}:${snapshot.data.minute.toString().padLeft(2,'0')}" :
+                                      "${scheduleTime.year.toString()}-${scheduleTime.month.toString().padLeft(2,'0')}-${scheduleTime.day.toString().padLeft(2,'0')}:${scheduleTime.hour.toString().padLeft(2,'0')}:${scheduleTime.minute.toString().padLeft(2,'0')}",
+                                style: TextStyle(
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
+                                        color: Colors.grey.shade800),
+                              ),
+
+                            )
+                          ),
+
+                        ],
+                      ),
+
+                      TextButton(
+                        onPressed: () {
+                          debugPrint('Notification Scheduled for $scheduleTime');
+                          NotificationService().scheduleNotification(
+                              title: _titleController.text,
+                              body: _contentController.text,
+                              scheduledNotificationDateTime: scheduleTime);
+                        },
+                        child: const Text(
+                          'Set Time Remind',
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+
+                    ]
+
+                ),
+              )
+
+          );
+        });
+  }
+
 
   Future<void> textEditDialog(BuildContext context) async {
     await showDialog(
@@ -827,13 +946,34 @@ class _EditScreenState extends State<EditScreen> {
                             color: Colors.black,
                             borderRadius: BorderRadius.circular(25)),
                         child: const Icon(
-                          Icons.upload_rounded,
+                          Icons.image,
                           color: Colors.white,
                           textDirection: TextDirection.ltr,
                           size: 30,
                         ),
                       ),
                     ),
+                    // IconButton(
+                    //   onPressed: () async {
+                    //     selectfile();
+                    //     // Handle file upload action
+                    //   },
+                    //   alignment: Alignment.bottomLeft,
+                    //   iconSize: 57,
+                    //   icon: Container(
+                    //     width: 300,
+                    //     height: 300,
+                    //     decoration: BoxDecoration(
+                    //         color: Colors.black,
+                    //         borderRadius: BorderRadius.circular(25)),
+                    //     child: const Icon(
+                    //       Icons.image_outlined,
+                    //       color: Colors.white,
+                    //       textDirection: TextDirection.ltr,
+                    //       size: 30,
+                    //     ),
+                    //   ),
+                    // ),
                     // IconButton(
                     //   onPressed: () async {
                     //     selectfile();
