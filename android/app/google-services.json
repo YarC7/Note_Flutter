@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "254628548577",
+    "firebase_url": "https://first-demo-53301-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "first-demo-53301",
+    "storage_bucket": "first-demo-53301.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:254628548577:android:157e2d1d66df91e1cc8ca0",
+        "android_client_info": {
+          "package_name": "com.example.note_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJO8c4AKCPDaLt8LzWnPzBz8AvzY0BFKE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
