@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:note_app/screens/forgot_password.dart';
 import 'package:note_app/screens/home.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:note_app/constants/utility.dart';
@@ -120,7 +121,7 @@ class LoginScreenState extends State<LoginScreen> {
                         email = value;
                       },
                       decoration:
-                      kTextFieldDecoration.copyWith(hintText: 'Enter your email ',
+                      kEmailFieldDecoration.copyWith(hintText: 'Enter your email ',
                       suffixIcon: IconButton(onPressed:(){} , icon: const Icon(Icons.mail))),
 
 
@@ -150,46 +151,41 @@ class LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(
-                      height: 10.0,
+                      height: 5.0,
                     ),
                       Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            // Checkbox(
-                            //   value: isCheckedRememberMe,
-                            //     onChanged: actionRemeberMe(
-                            //         isCheckedRememberMe)),
-                            // SizedBox(
-                            //     height: 30.0,
-                            //     width: 30.0,
-                            //     child: Theme(
-                            //       data: ThemeData(
-                            //           unselectedWidgetColor:
-                            //           Colors.white),
-                            //       child: Checkbox(
-                            //           activeColor: Colors.white,
-                            //           value: isCheckedRememberMe,
-                            //           onChanged: actionRemeberMe(
-                            //               isCheckedRememberMe)),
-                            //     )),
-                        Checkbox(
-                          checkColor: Colors.white,
-                          fillColor: MaterialStateProperty.resolveWith(getColor),
-                          value: isCheckedRememberMe!,
-                          onChanged: (bool? value) {
-                            setState(() {
-                              isCheckedRememberMe = value!;
-                            });
-                          },
-                      ),
+                            Checkbox(
+                              checkColor: Colors.white,
+                              fillColor: MaterialStateProperty.resolveWith(getColor),
+                              value: isCheckedRememberMe!,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  isCheckedRememberMe = value!;
+                                });
+                              },
+                          ),
 
-                            SizedBox(width: 10.0),
-                            Text("Remember Me",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ))
-                          ]),
+                                SizedBox(width: 10.0),
+                                Text("Remember Me",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    )),
+                            SizedBox(width: 40.0),
+                            Text.rich(
+                              TextSpan(
+                                children: <TextSpan>[
+                                  TextSpan(text: 'Forgot Password', style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white , fontSize: 16),recognizer: TapGestureRecognizer()..onTap = () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: ((context) => ForgotPasswordScreen()))),
+                                  )],
+                              ),
+                            ),
+
+                              ]),
                     Container(
                       width: 50,
                       child: OutlinedButton(

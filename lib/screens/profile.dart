@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class ProfileScreen extends StatefulWidget {
 
@@ -14,6 +17,24 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
 
   final _auth = FirebaseAuth.instance;
+  String? _email;
+
+
+
+  @override
+  void initState() {
+    super.initState();
+
+
+    setState(() {
+      _email = _auth.currentUser!.email;
+    });
+    // FirebaseFirestore.instance.collection("notes",ref)
+
+  }
+
+
+
 
 
   @override
@@ -82,16 +103,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-              SizedBox(
-                height: 50,
-              ),
-                Container(
-                  decoration: BoxDecoration(
-                      color: Colors.grey.shade800.withOpacity(.8),
-                      borderRadius: BorderRadius.circular(10)),
-                    width: 200, // Set a specific width
-                    height: 200,
-                  child: Image.asset('assets/user.png',width: 100, height: 100), // <-- SEE HERE,
+                SizedBox(
+                  height: 50,
+                ),
+
+                Expanded(
+                    child:
+                      Column(
+                      children: [
+                        Text("Hello ${_email}",
+                              style: TextStyle(color: Colors.white,fontSize: 20)),
+
+                        Container(
+                          decoration: BoxDecoration(
+                              color: Colors.grey.shade800.withOpacity(.8),
+                              borderRadius: BorderRadius.circular(10)),
+                          width: 200, // Set a specific width
+                          height: 200,
+                          child: Image.asset('assets/user.png',width: 100, height: 100), // <-- SEE HERE,
+                        ),
+
+                        ElevatedButton(
+                            onPressed: (){
+
+                            },
+                            child: const Text('Change password',style: const TextStyle(fontWeight: FontWeight.bold,color: Colors.black, fontSize: 20)),)
+
+
+                      ],
+                    )
                 )
               ]
             ),

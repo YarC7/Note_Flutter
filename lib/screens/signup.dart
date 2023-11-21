@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -17,6 +18,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool showSpinner = false;
   String email = '';
   String password = '';
+  String user_name = '';
+  bool isVisible = true;
   final _auth = FirebaseAuth.instance;
   @override
   Widget build(BuildContext context) {
@@ -90,14 +93,30 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         color: Colors.white, // Color of the input text while typing
                       ),
                       decoration:
-                      kTextFieldDecoration.copyWith(hintText: 'Enter your email '),
+                      kEmailFieldDecoration.copyWith(hintText: 'Enter your email ',
+                          suffixIcon: IconButton(onPressed:(){} , icon: const Icon(Icons.mail))),
+                    ),
+                    const SizedBox(
+                      height: 8.0,
+                    ),TextField(
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.emailAddress,
+                      onChanged: (value) {
+                        user_name = value;
+                      },
+                      style: TextStyle(
+                        color: Colors.white, // Color of the input text while typing
+                      ),
+                      decoration:
+                      kTextFieldDecoration.copyWith(hintText: 'Enter your user name ',
+                          suffixIcon: IconButton(onPressed:(){} , icon: const Icon(Icons.account_circle))),
                     ),
                     const SizedBox(
                       height: 8.0,
                     ),
                     TextField(
                       textAlign: TextAlign.center,
-                      obscureText: true,
+                      obscureText: isVisible,
                       onChanged: (value) {
                         password = value;
                       },
@@ -105,7 +124,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         color: Colors.white, // Color of the input text while typing
                       ),
                       decoration: kPassFieldDecoration.copyWith(
-                          hintText: 'Enter your password '),
+                          hintText: 'Enter your password ',
+                          suffixIcon: IconButton(
+                              onPressed: (){
+                                setState(() {
+                                  isVisible = !isVisible;
+                                });
+                              },
+                              icon: isVisible ? const Icon(Icons.visibility_off) : const Icon(Icons.visibility))
+                      ),
                     ),
                     const SizedBox(
                       height: 24.0,
@@ -143,6 +170,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 setState(() {
                                   showSpinner = false;
                                 });
+
+                                FirebaseFirestore.instance.collection("users").add({
+                                  "email": email,
+                                  "user_name": user_name,
+                                  "password" : password,
+                                  "image" : '',
+                                  "createdTime": DateTime.now(),
+                                  "modifiedTime": DateTime.now(),
+                                });
+
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(

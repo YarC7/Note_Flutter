@@ -3,7 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:note_app/constants/colors.dart';
+import 'package:note_app/constants/utility.dart';
+import 'package:note_app/models/listNotes.dart';
 import 'package:note_app/models/note.dart';
+import 'package:note_app/models/user.dart' as user;
 import 'package:note_app/screens/edit.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -47,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final user = _auth.currentUser;
       if (user != null) {
         loggedInUser = user;
+
       }
     } catch (e) {
       print(e);
@@ -619,6 +623,31 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+  //
+  //
+  //
+  //
+  // Future<user.User?> getUserData() async {
+  //   if (_auth.currentUser != null) {
+  //     QuerySnapshot userSnapshot = await FirebaseFirestore.instance.collection('users').where('email', isEqualTo: _auth.currentUser?.email).get();
+  //     if (userSnapshot.docs.isNotEmpty) {
+  //       QueryDocumentSnapshot document = userSnapshot.docs.first;
+  //       Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+  //       return user.User(
+  //           email : data["email"],
+  //           user_name: data["user_name"],
+  //           password: data["password"],
+  //           listNotes: data["listNotes"],
+  //           createdTime: (data['createdTime'] as Timestamp).toDate(),
+  //           modifiedTime: (data['modifiedTime'] as Timestamp).toDate());
+  //     }
+  //   }
+  //   return null;
+  // }
+  //
+  //
+  //
+
 
 
   Future<void> getNotesFromFirestoreCollection() async {
@@ -642,19 +671,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }).toList();
 
       filteredNotes = List.from(sampleNotes);
-
-      // print("Done FilterNotes");
-      // for (int i = 0; i < filteredNotes.length; i++) {
-      //   Note note = filteredNotes[i];
-      //   print('Filtered Element $i:');
-      //   print('Title: ${note.title}');
-      //   print('Content: ${note.content}');
-      //   print('Modified Time: ${note.modifiedTime}');
-      //   print('\n'); // Add a line break for separation
-      // }
-
-
-
     } else {
       print('No documents found in the collection.');
     }
