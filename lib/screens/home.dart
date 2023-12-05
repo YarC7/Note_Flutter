@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late User loggedInUser;
   bool isDarkMode = true;
 
-
+  String? userId;
   bool isGridView = false;
 
 
@@ -38,8 +38,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     getCurrentUser();
-    getNotesFromFirestoreCollection();
+    getUserId();
+    // getNotesFromFirestoreCollection();
+    getNotesFromSpecificUser();
+  }
 
+
+  Future<void> getUserId () async {
+    String? userEmail = FirebaseAuth.instance.currentUser?.email;
+    QuerySnapshot userSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('email', isEqualTo: userEmail)
+        .get();
+    setState(() {
+      userId = userSnapshot.docs[0].id;
+    });
+    print(userId);
   }
 
 
@@ -293,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               ListTile(
                                 onTap: () async {
-                                  getNotesFromFirestoreCollection();
+                                  getNotesFromSpecificUser();
                                   final result = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -304,12 +318,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   if (result != null) {
                                     {
                                       String id = sampleNotes[index].id;
-                                      QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('notes').get();
+                                      QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection("users")
+                                          .doc(userId).collection('notes').get();
                                       for (QueryDocumentSnapshot document in querySnapshot.docs) {
                                         Map<String, dynamic> data = document.data() as Map<String, dynamic>;
                                         if (data["id"] == id){
                                           String firestoreDocumentId = document.id;
-                                          final docNote = FirebaseFirestore.instance.collection('notes').doc(firestoreDocumentId);
+                                          final docNote = FirebaseFirestore.instance.collection("users")
+                                              .doc(userId).collection('notes').doc(firestoreDocumentId);
                                           docNote.update({
                                             "title": result[0],
                                             "content": result[1],
@@ -322,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         }
                                       }
                                       filteredNotes.removeAt(index);
-                                      getNotesFromFirestoreCollection();
+                                      getNotesFromSpecificUser();
 
 
                                     };
@@ -369,25 +385,27 @@ class _HomeScreenState extends State<HomeScreen> {
                                       // if (result!=null && result){
                                       //
                                       // }
-                                      getNotesFromFirestoreCollection();
+                                      getNotesFromSpecificUser();
 
                                       if (index >= 0 && index < sampleNotes.length) {
                                         // The index is valid, so you can safely access the element
                                         String id = sampleNotes[index].id;
 
 
-                                        QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('notes').get();
+                                        QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection("users")
+                                            .doc(userId).collection('notes').get();
 
                                         for (QueryDocumentSnapshot document in querySnapshot.docs) {
                                           Map<String, dynamic> data = document.data() as Map<String, dynamic>;
                                           if (data["id"] == id){
                                             String firestoreDocumentId = document.id;
-                                            final docNote = FirebaseFirestore.instance.collection('notes').doc(firestoreDocumentId);
+                                            final docNote = FirebaseFirestore.instance.collection("users")
+                                                .doc(userId).collection('notes').doc(firestoreDocumentId);
                                             docNote.delete().then((_) {
                                               setState(() {
                                                 // Remove the deleted note from the filteredNotes list
                                                 filteredNotes.removeAt(index);
-                                                getNotesFromFirestoreCollection();
+                                                getNotesFromSpecificUser();
 
                                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                                                   content: Text('You have successfully deleted a note'),
@@ -441,7 +459,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.all(10.0),
                           child: ListTile(
                             onTap: () async {
-                              getNotesFromFirestoreCollection();
+                              getNotesFromSpecificUser();
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -452,12 +470,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               if (result != null) {
                                 {
                                   String id = sampleNotes[index].id;
-                                  QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('notes').get();
+                                  QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection("users")
+                                      .doc(userId).collection('notes').get();
                                   for (QueryDocumentSnapshot document in querySnapshot.docs) {
                                     Map<String, dynamic> data = document.data() as Map<String, dynamic>;
                                     if (data["id"] == id){
                                       String firestoreDocumentId = document.id;
-                                      final docNote = FirebaseFirestore.instance.collection('notes').doc(firestoreDocumentId);
+                                      final docNote = FirebaseFirestore.instance.collection("users")
+                                          .doc(userId).collection('notes').doc(firestoreDocumentId);
                                       docNote.update({
                                         "title": result[0],
                                         "content": result[1],
@@ -470,7 +490,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     }
                                   }
                                   filteredNotes.removeAt(index);
-                                  getNotesFromFirestoreCollection();
+                                  getNotesFromSpecificUser();
 
 
                                 };
@@ -513,25 +533,28 @@ class _HomeScreenState extends State<HomeScreen> {
                                 // if (result!=null && result){
                                 //
                                 // }
-                                getNotesFromFirestoreCollection();
+                                getNotesFromSpecificUser();
 
                                 if (index >= 0 && index < sampleNotes.length) {
                                   // The index is valid, so you can safely access the element
                                   String id = sampleNotes[index].id;
 
 
-                                  QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('notes').get();
+                                  QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection("users")
+                                      .doc(userId).collection('notes').get();
 
                                   for (QueryDocumentSnapshot document in querySnapshot.docs) {
                                     Map<String, dynamic> data = document.data() as Map<String, dynamic>;
                                     if (data["id"] == id){
                                       String firestoreDocumentId = document.id;
-                                      final docNote = FirebaseFirestore.instance.collection('notes').doc(firestoreDocumentId);
+                                      print(firestoreDocumentId);
+                                      final docNote = FirebaseFirestore.instance.collection("users")
+                                          .doc(userId).collection('notes').doc(firestoreDocumentId);
                                       docNote.delete().then((_) {
                                         setState(() {
                                           // Remove the deleted note from the filteredNotes list
                                           filteredNotes.removeAt(index);
-                                          getNotesFromFirestoreCollection();
+                                          getNotesFromSpecificUser();
 
                                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                                             content: Text('You have successfully deleted a note'),
@@ -582,15 +605,36 @@ class _HomeScreenState extends State<HomeScreen> {
               if (result[0]!=" " && result[1]!=" "){
                 String nextId = (filteredNotes.length + 1).toString().trim();
 
-                FirebaseFirestore.instance.collection("notes").add({
+                // FirebaseFirestore.instance.collection("notes").add({
+                //   "id": nextId.toString(),
+                //   "title": result[0],
+                //   "content": result[1],
+                //   "style" : result[2],
+                //   "image" : result[3],
+                //   "record" : result[4],
+                //   "color" : result[5],
+                //   "modifiedTime": DateTime.now(),
+                // });
+
+
+                CollectionReference userNotesCollection = FirebaseFirestore.instance
+                    .collection("users")
+                    .doc(userId)
+                    .collection("notes");
+
+                userNotesCollection.add({
                   "id": nextId.toString(),
                   "title": result[0],
                   "content": result[1],
-                  "style" : result[2],
-                  "image" : result[3],
-                  "record" : result[4],
-                  "color" : result[5],
+                  "style": result[2],
+                  "image": result[3],
+                  "record": result[4],
+                  "color": result[5],
                   "modifiedTime": DateTime.now(),
+                }).then((value) {
+                  print("Note added successfully!");
+                }).catchError((error) {
+                  print("Failed to add note: $error");
                 });
                 indexxxx = indexxxx +1;
 
@@ -626,31 +670,54 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  //
-  //
-  //
-  //
-  // Future<user.User?> getUserData() async {
-  //   if (_auth.currentUser != null) {
-  //     QuerySnapshot userSnapshot = await FirebaseFirestore.instance.collection('users').where('email', isEqualTo: _auth.currentUser?.email).get();
-  //     if (userSnapshot.docs.isNotEmpty) {
-  //       QueryDocumentSnapshot document = userSnapshot.docs.first;
-  //       Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-  //       return user.User(
-  //           email : data["email"],
-  //           user_name: data["user_name"],
-  //           password: data["password"],
-  //           listNotes: data["listNotes"],
-  //           createdTime: (data['createdTime'] as Timestamp).toDate(),
-  //           modifiedTime: (data['modifiedTime'] as Timestamp).toDate());
-  //     }
-  //   }
-  //   return null;
-  // }
-  //
-  //
-  //
 
+
+
+  Future<void> getNotesFromSpecificUser() async {
+    String? mail = _auth.currentUser?.email;
+    // Accessing the 'note' subcollection for the current user
+    QuerySnapshot userSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('email', isEqualTo: mail)
+        .get();
+
+    if (userSnapshot.docs.isNotEmpty) {
+      // Assuming only one user document will match the email
+      String userId = userSnapshot.docs[0].id;
+
+
+      // Accessing the notes collection for the user
+      QuerySnapshot notesSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('notes')
+          .get();
+
+      // Iterate through notes documents if needed
+      if (notesSnapshot.docs.isNotEmpty) {
+        sampleNotes = notesSnapshot.docs.map((doc) {
+          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+          return Note(
+            id: data["id"],
+            title: data['title'],
+            content: data['content'],
+            style : data['style'],
+            image: data["image"],
+            record: data["record"],
+            color: data["color"],
+            modifiedTime: (data['modifiedTime'] as Timestamp).toDate(),
+          );
+        }).toList();
+
+        filteredNotes = List.from(sampleNotes);
+      } else {
+        print('No documents found in the collection.');
+      }
+    } else {
+      // User document not found
+      print('User document not found for email: $mail');
+    }
+  }
 
 
   Future<void> getNotesFromFirestoreCollection() async {
