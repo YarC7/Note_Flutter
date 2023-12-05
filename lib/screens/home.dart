@@ -34,7 +34,6 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isGridView = false;
 
 
-
   @override
   void initState() {
     super.initState();
@@ -98,10 +97,14 @@ class _HomeScreenState extends State<HomeScreen> {
   //   });
   // }
 
-  String colorHex(int index){
+  Color getColorFromHex(int index) {
     String hexColor = filteredNotes[index].color;
 
-    return hexColor;
+    if (hexColor != null && hexColor.isNotEmpty) {
+      return Color(int.parse(hexColor) | 0xFF000000);
+    } else {
+      return Colors.white;
+    }
   }
 
   @override
@@ -279,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       return Card(
                         margin: const EdgeInsets.only(bottom: 10),
-                        color: Color(int.parse(colorHex(index))),
+                        color: getColorFromHex(index),
                         elevation: 3,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20)),
@@ -430,7 +433,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       return Card(
                         margin: const EdgeInsets.only(bottom: 20),
-                        color: Color(int.parse(colorHex(index))),
+                        color: getColorFromHex(index),
                         elevation: 3,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),

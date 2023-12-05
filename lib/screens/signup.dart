@@ -160,25 +160,32 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                   const SnackBar(
                                       content: Text('please input email or password.')));;
                             }
+                            FirebaseAuth.instance.fetchSignInMethodsForEmail(email).then((signInMethods) => {
+                              if (signInMethods.length > 0){
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Email has already registered')))
 
+                              }
+                            });
                             //Create new Account
                             try {
                               await _auth
                                   .createUserWithEmailAndPassword(
                                   email: email, password: password)
                                   .then((value) {
+                                  String? userId = value.user?.uid;
                                 setState(() {
+
                                   showSpinner = false;
                                 });
 
-                                FirebaseFirestore.instance.collection("users").add({
-                                  "email": email,
-                                  "user_name": user_name,
-                                  "password" : password,
-                                  "image" : '',
-                                  "createdTime": DateTime.now(),
-                                  "modifiedTime": DateTime.now(),
-                                });
+                                //
+                                // FirebaseFirestore.instance.collection("users").doc(userId).set(
+                                //   email : email,
+                                //   user_name: user_name,
+                                //   password : password,
+                                // );
 
                                 Navigator.push(
                                     context,

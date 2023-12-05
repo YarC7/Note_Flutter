@@ -902,6 +902,7 @@ class _EditScreenState extends State<EditScreen> {
 
                     _color = getHexCode((color.toString()));
                   });
+                  print(_color);
 
                 },
               ),
