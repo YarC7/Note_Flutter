@@ -173,19 +173,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               await _auth
                                   .createUserWithEmailAndPassword(
                                   email: email, password: password)
-                                  .then((value) {
+                                  .then((value) async {
                                   String? userId = value.user?.uid;
+                                  await FirebaseFirestore.instance.collection('users').doc(userId).set({
+                                    'email': email,
+                                    'user_name' : user_name,
+                                    'password' : password,
+                                    'createdTime' : DateTime.now(),
+                                    'modifiedTime' : DateTime.now()
+                                    // Add other user information as needed
+                                  });
                                 setState(() {
 
                                   showSpinner = false;
                                 });
-
-                                //
-                                // FirebaseFirestore.instance.collection("users").doc(userId).set(
-                                //   email : email,
-                                //   user_name: user_name,
-                                //   password : password,
-                                // );
 
                                 Navigator.push(
                                     context,
@@ -195,6 +196,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                     const SnackBar(
                                         content: Text('Successfully Register.')));;
                                 });
+
+
                             } on FirebaseAuthException catch (e) {
                               if (e.code == 'invalid-email') {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -210,6 +213,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 );
                               }
                             } catch (e) {
+                              print('Error registering user and creating user document: $e');
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Registration Failed. Due to $e'),
