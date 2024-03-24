@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:note_app/screens/Change_Information.dart';
+import 'package:note_app/screens/change_password.dart';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -124,11 +126,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
 
                         ElevatedButton(
-                            onPressed: (){
-
-                            },
-                            child: const Text('Change password',style: const TextStyle(fontWeight: FontWeight.bold,color: Colors.black, fontSize: 20)),)
-
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ChangePasswordScreen()),
+                            );
+                          },
+                          child: const Text('Change password', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 20)),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ChangeInformationScreen()),
+                            );
+                          },
+                          child: const Text('Change Information', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 20)),
+                        ),
 
                       ],
                     )

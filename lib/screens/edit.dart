@@ -14,6 +14,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:social_media_recorder/audio_encoder_type.dart';
 import 'package:social_media_recorder/screen/social_media_recorder.dart';
+import 'package:uri_to_file/uri_to_file.dart';
 import '../constants/common.dart';
 import '../models/dateTimePicker.dart';
 import '../models/note.dart';
@@ -25,6 +26,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../services/notificate.dart';
+import 'package:http/http.dart' as http;
 
 class EditScreen extends StatefulWidget {
   final Note? note;
@@ -94,6 +96,7 @@ class _EditScreenState extends State<EditScreen> {
   FocusNode _editorFocusNode = FocusNode();
   DateTime scheduleTime = DateTime.now();
   MyStream myStream = new MyStream();
+  String? screenshotsPath;
 
 
   @override
@@ -815,8 +818,8 @@ class _EditScreenState extends State<EditScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(40)),
               content: Container(
-                height: 150,
-                width: 150,
+                height: 200,
+                width: 500,
 
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -839,6 +842,33 @@ class _EditScreenState extends State<EditScreen> {
                                 takeScreenShot();
                               },
                               title: new Center(child: new Text("Share with image",
+                                style: new TextStyle(
+                                    fontWeight: FontWeight.w500, fontSize: 25.0),)),
+                            )),
+                        Expanded(
+                            child:
+                            ListTile(
+                                onTap: () async {
+                                  String imageUrl = await _startServerAndGetImageUrl();
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text('Image URL'),
+                                        content: Text(imageUrl),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text('Close'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              title: new Center(child: new Text("Share image online",
                                 style: new TextStyle(
                                     fontWeight: FontWeight.w500, fontSize: 25.0),)),
                             )),
@@ -879,12 +909,47 @@ class _EditScreenState extends State<EditScreen> {
     }).catchError((onError) {
       print(onError);
     });
-
   }
   _saved(image) async {
     final result = await ImageGallerySaver.saveImage(image);
+    if (result != null && result['isSuccess'] == true) {
+      String? filePath = result['filePath']; // Access the 'filePath' key from the result Map
+      if (filePath != null) {
+        print("File Saved to Gallery at $filePath");
+        setState(() {
+          screenshotsPath = filePath;
+        });
+        // Now 'filePath' contains the path of the saved image file
+        // Use this 'filePath' as needed in your application
+      } else {
+        print("File path is null");
+      }
+    } else {
+      print("Failed to save file to gallery");
+    }
+
     print("File Saved to Gallery");
   }
+
+  Future<String> _startServerAndGetImageUrl() async {
+    takeScreenShot();
+    HttpServer? server;
+    try {
+      server = await HttpServer.bind('localhost', 8080);
+      server.listen((HttpRequest request) async {
+
+        final File file = await toFile(screenshotsPath!);
+
+        request.response.headers.contentType = ContentType('image', 'jpeg');
+        file.openRead().pipe(request.response);
+      });
+      return 'http://localhost:8080/note_image'; // Replace with your local image URL
+    } catch (e) {
+      print('Failed to start server: $e');
+      return 'Server failed to start';
+    }
+  }
+
 
   Future<dynamic> colorDiaglog(BuildContext context) {
     return showDialog(
